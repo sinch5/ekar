@@ -6,6 +6,7 @@ import com.sinch.countermanager.services.BorderInfoService;
 import org.springframework.stereotype.Service;
 
 /**
+ * @author Sinchinov Yury
  * Service to store timestamps when border is reached
  */
 @Service("borderInfoService")

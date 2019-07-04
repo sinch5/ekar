@@ -5,8 +5,13 @@ import com.sinch.countermanager.repository.CounterValueRepository;
 import com.sinch.countermanager.services.CounterManagerService;
 import org.springframework.stereotype.Service;
 
+import static com.sinch.countermanager.services.impl.ConcurrencyServiceImpl.HIGH_BORER;
+import static com.sinch.countermanager.services.impl.ConcurrencyServiceImpl.LOW_BORER;
+
 /**
- * Used for control of counter value
+ * @author Sinchinov Yury
+ *
+ *  Used for control of counter value
  *
  *  Non Thread safe class.
  *  Should be synchronized externally
@@ -31,7 +36,10 @@ public class CounterManagerServiceImpl implements CounterManagerService {
     }
 
     @Override
-    public void setInitialValue(Integer value) {
+    public void setValue(Integer value) {
+        if (value > HIGH_BORER || value < LOW_BORER) {//to convey invariant
+           throw new RuntimeException("Inaccessible value");
+        }
         Counter.getInstance().setValue(value);
         counterValueRepository.save(new CounterEntity(value));
     }

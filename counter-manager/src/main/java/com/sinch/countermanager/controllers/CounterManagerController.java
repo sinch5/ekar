@@ -35,9 +35,8 @@ public class CounterManagerController {
     }
 
     @PutMapping("/counter/{value}")
-    void setInitialCount(@PathVariable Integer value) {
-        counterManagerService.setInitialValue(value);
+    public void setInitialCount(@PathVariable Integer value) {
+        counterManagerService.setValue(value);
         concurrencyService.awake();
     }
-
 }

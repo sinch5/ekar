@@ -16,13 +16,14 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.IntStream;
 
 /**
+ * @author Sinchinov Yury
  * This service start producers and consumers to change concurrently counter value
  */
 @Service("concurrencyService")
 public class ConcurrencyServiceImpl implements ConcurrencyService {
 
-    private static final int HIGH_BORER = 100;
-    private static final int LOW_BORER = 0;
+    public static final int HIGH_BORER = 100;
+    public static final int LOW_BORER = 0;
 
     private final CounterManagerService counterManagerService;
     private final BorderInfoService borderInfoService;
