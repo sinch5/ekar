@@ -50,7 +50,7 @@ public class ConcurrencyServiceImpl implements ConcurrencyService {
 
     @Override
     public void start(int producers, int consumers) {
-        CyclicBarrier cyclicBarrier = new CyclicBarrier(producers + consumers);
+        CyclicBarrier cyclicBarrier = new CyclicBarrier(producers + consumers); // To start all threads at the sametime to model competition
 
         startProducers(cyclicBarrier, Optional.empty(), producers);
         startConsumers(cyclicBarrier, Optional.empty(), consumers);
