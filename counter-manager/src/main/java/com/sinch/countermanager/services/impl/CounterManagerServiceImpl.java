@@ -43,7 +43,7 @@ public class CounterManagerServiceImpl implements CounterManagerService {
            throw new RuntimeException("Inaccessible value");
         }
         counter = value;
-        System.out.println("counter is ser to " + value);
+        System.out.println("counter is set to " + value);
         counterValueRepository.save(new CounterEntity(value));
     }
 
