@@ -46,6 +46,11 @@ public class ConcurrencyServiceImplTests {
 		countDownLatch.await();
 		assert(counterManagerService.getValue().equals(90)); //Result must be 90
 
+		countDownLatch = new CountDownLatch(400);
+		concurrencyService.start(200, 200, countDownLatch);
+		countDownLatch.await();
+		assert(counterManagerService.getValue().equals(50));
+
 	}
 
 }

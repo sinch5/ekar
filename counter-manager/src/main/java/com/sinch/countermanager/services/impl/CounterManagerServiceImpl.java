@@ -21,18 +21,20 @@ public class CounterManagerServiceImpl implements CounterManagerService {
 
     private final CounterValueRepository counterValueRepository;
 
+    private Integer counter = 50;
+
     public CounterManagerServiceImpl(CounterValueRepository counterValueRepository) {
         this.counterValueRepository = counterValueRepository;
     }
 
     @Override
     public void increase() {
-        Counter.getInstance().increment();
+        counter++;
     }
 
     @Override
     public void decrease() {
-        Counter.getInstance().decrement();
+        counter--;
     }
 
     @Override
@@ -40,13 +42,14 @@ public class CounterManagerServiceImpl implements CounterManagerService {
         if (value > HIGH_BORER || value < LOW_BORER) {//to convey invariant
            throw new RuntimeException("Inaccessible value");
         }
-        Counter.getInstance().setValue(value);
+        counter = value;
+        System.out.println("counter is ser to " + value);
         counterValueRepository.save(new CounterEntity(value));
     }
 
     @Override
     public Integer getValue() {
-        return Counter.getInstance().getValue();
+        return counter;
     }
 
     @Override

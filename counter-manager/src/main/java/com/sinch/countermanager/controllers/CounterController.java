@@ -10,29 +10,20 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ *  End points for dealing with counter
+ */
 @RestController
-public class CounterManagerController {
+public class CounterController {
 
-    private final RequestInfoService requstInfoService;
     private final CounterManagerService counterManagerService;
-    private ConcurrencyService concurrencyService;
+    private final ConcurrencyService concurrencyService;
 
-
-    public CounterManagerController(RequestInfoService requstInfoService, CounterManagerService counterManagerService, ConcurrencyService concurrencyService) {
-        this.requstInfoService = requstInfoService;
+    public CounterController(CounterManagerService counterManagerService, ConcurrencyService concurrencyService) {
         this.counterManagerService = counterManagerService;
         this.concurrencyService = concurrencyService;
     }
 
-    @PutMapping("/producers/{producers}/consumers/{consumers}")
-    public ResponseEntity<RequestInfoEntity> setProducerAndConsumerCount(@PathVariable Integer producers, @PathVariable Integer consumers) {
-        RequestInfoEntity requestInfoEntity = new RequestInfoEntity(producers, consumers);
-
-        concurrencyService.start(requestInfoEntity.getProducers(), requestInfoEntity.getConsumers());
-        requstInfoService.persist(requestInfoEntity);
-
-        return new ResponseEntity(requestInfoEntity, HttpStatus.CREATED);
-    }
 
     @PutMapping("/counter/{value}")
     public void setInitialCount(@PathVariable Integer value) {
