@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @ControllerAdvice
-public class CounterManagerAdvice {
-    @ExceptionHandler({RuntimeException.class})
+public class ExceptionHandler {
+    @org.springframework.web.bind.annotation.ExceptionHandler({RuntimeException.class})
     public ResponseEntity<String> handleRuntimeException(RuntimeException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
     }
