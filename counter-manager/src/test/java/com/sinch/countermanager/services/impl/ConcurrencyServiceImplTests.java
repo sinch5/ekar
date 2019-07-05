@@ -49,7 +49,7 @@ public class ConcurrencyServiceImplTests {
 		countDownLatch = new CountDownLatch(400);
 		concurrencyService.start(200, 200, countDownLatch);
 		countDownLatch.await();
-		assert(counterManagerService.getValue().equals(50));
+		assert(counterManagerService.getValue().equals(90));
 
 	}
 
