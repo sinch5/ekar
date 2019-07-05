@@ -21,7 +21,7 @@ public class CounterManagerServiceImpl implements CounterManagerService {
 
     private final CounterValueRepository counterValueRepository;
 
-    private Integer counter = 50;
+    private volatile int counter = 50;
 
     public CounterManagerServiceImpl(CounterValueRepository counterValueRepository) {
         this.counterValueRepository = counterValueRepository;
@@ -43,7 +43,7 @@ public class CounterManagerServiceImpl implements CounterManagerService {
            throw new RuntimeException("Inaccessible value");
         }
         counter = value;
-        System.out.println("counter is set to " + value);
+        System.out.println("3 is set to " + value);
         counterValueRepository.save(new CounterEntity(value));
     }
 
