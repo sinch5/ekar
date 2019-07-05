@@ -1,7 +1,6 @@
 package com.sinch.countermanager.services.impl;
 
 import com.sinch.countermanager.CounterManagerApplication;
-import com.sinch.countermanager.CounterManagerConfigTest;
 import com.sinch.countermanager.services.CounterManagerService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,7 +15,6 @@ import org.springframework.test.context.junit4.SpringRunner;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = CounterManagerApplication.class)
-@ContextConfiguration(classes= CounterManagerConfigTest.class)
 public class CounterManagerServiceImplTest {
 
     @Autowired

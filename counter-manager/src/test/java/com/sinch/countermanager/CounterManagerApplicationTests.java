@@ -9,14 +9,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = CounterManagerApplication.class)
-@ContextConfiguration(classes= CounterManagerConfigTest.class)
 @Profile("test")
 public class CounterManagerApplicationTests {
-
-
 	@Test
 	public void contextLoads() throws InterruptedException {
-
 
 	}
 
