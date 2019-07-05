@@ -1,7 +1,5 @@
 package com.sinch.countermanager.services;
 
-import com.sinch.countermanager.model.RequestInfoEntity;
-
 import java.util.concurrent.CountDownLatch;
 
 public interface ConcurrencyService {

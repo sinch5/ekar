@@ -2,7 +2,6 @@ package com.sinch.countermanager.controllers;
 
 import com.sinch.countermanager.model.RequestInfoEntity;
 import com.sinch.countermanager.services.ConcurrencyService;
-import com.sinch.countermanager.services.CounterManagerService;
 import com.sinch.countermanager.services.RequestInfoService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
