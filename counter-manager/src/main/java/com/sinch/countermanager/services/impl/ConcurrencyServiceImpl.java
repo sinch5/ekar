@@ -94,7 +94,7 @@ public class ConcurrencyServiceImpl implements ConcurrencyService {
     private void process(Optional<CountDownLatch> countDownLatch,  Integer threadId, Condition from, Condition to, int border, Runnable valueChanger) {
         try {
             producersLock.lock();
-            while (counterManagerService.getValue() == border) {
+            while (isBorderReached(border)) {
                 from.await();
             }
             valueChanger.run();
@@ -116,8 +116,12 @@ public class ConcurrencyServiceImpl implements ConcurrencyService {
     }
 
     void fixBorderReached(int border) {
-        if (counterManagerService.getValue() == border) {
+        if (isBorderReached(border)) {
             borderInfoService.persist(new BorderInfoEntity(border));
         }
+    }
+
+    boolean isBorderReached(int border) {
+        return counterManagerService.getValue() == border;
     }
 }
