@@ -17,10 +17,8 @@ For example we have initial value 50, If we set producer to 150 and consumers to
 
 # REST API
 Once containers are ran using postman send PUT query to create consumers and producers
-http://localhost:8090/producers/0/consumers/50
-To initialize counter by value make PUT request 
-http://localhost:8090/counter/30
-
+* PUT - http://localhost:8090/producers/90/consumers/50
+* PUT - http://localhost:8090/counter/30
  
 # Notice
  If producers will be much more than consumers it woud incure exhaustion threads in os. 
