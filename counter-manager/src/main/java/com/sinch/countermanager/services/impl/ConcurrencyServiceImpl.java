@@ -7,7 +7,6 @@ import com.sinch.countermanager.services.CounterManagerService;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
-import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
@@ -101,18 +100,16 @@ public class ConcurrencyServiceImpl implements ConcurrencyService {
         try {
             producersLock.lock();
             while (counterManagerService.getValue() == border) {
-                if (!borderReached) {
-                    borderReached = true;
-                    borderInfoService.persist(new BorderInfoEntity(border));
-                }
                 from.await();
             }
             valueChanger.run();
-            System.out.println(String.format("%s-%s count=%s",from.equals(producedMsg)?"producers":"consumers" ,threadId, counterManagerService.getValue()));
-            borderReached = false;
-            to.signal();
+            logChanging(from, threadId);
+            if (counterManagerService.getValue() == border) {
+                borderInfoService.persist(new BorderInfoEntity(border));
+            }
+            to.signal();//Inform producer or consumer that counter is changed
         } catch (InterruptedException e) {
-            throw new  RuntimeException(e);
+            throw new RuntimeException(e);
         } finally {
             if (countDownLatch.isPresent()) {
                 countDownLatch.get().countDown();
@@ -121,11 +118,15 @@ public class ConcurrencyServiceImpl implements ConcurrencyService {
         }
     }
 
+    private void logChanging(Condition from, int threadId) {
+        System.out.println(String.format("%s-%s count=%s", from.equals(producedMsg)?"producer":"consumer", threadId, counterManagerService.getValue()));
+    }
+
     private void waitWhenAllThreadsReady(CyclicBarrier cyclicBarrier) {
-        try {
+        /*try {
             cyclicBarrier.await();
         } catch (InterruptedException| BrokenBarrierException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 }
