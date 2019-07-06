@@ -91,7 +91,7 @@ public class ConcurrencyServiceImpl implements ConcurrencyService {
         cachedThreadPool.execute(() -> process(countDownLatch, value, producedMsg,  consumedMsg, highBorer, ()->command.execute()));
     }
 
-    private void process(Optional<CountDownLatch> countDownLatch,  Integer threadId, Condition from, Condition to, int border, Runnable valueChanger) {
+    private void process(Optional<CountDownLatch> countDownLatch,  int threadId, Condition from, Condition to, int border, Runnable valueChanger) {
         try {
             producersLock.lock();
             while (isBorderReached(border)) {
@@ -99,7 +99,7 @@ public class ConcurrencyServiceImpl implements ConcurrencyService {
             }
             valueChanger.run();
             logChanging(from, threadId);
-            fixBorderReached(border);
+            fixBorderReached(border, threadId);
             to.signal();//Inform producer or consumer that counter is changed
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -115,9 +115,9 @@ public class ConcurrencyServiceImpl implements ConcurrencyService {
         System.out.println(String.format("%s-%s count=%s", from.equals(producedMsg)?"producer":"consumer", threadId, counterManagerService.getValue()));
     }
 
-    void fixBorderReached(int border) {
+    void fixBorderReached(int border, Integer threadId) {
         if (isBorderReached(border)) {
-            borderInfoService.persist(new BorderInfoEntity(border));
+            borderInfoService.persist(new BorderInfoEntity(border, threadId));
         }
     }
 

@@ -1,7 +1,6 @@
 package com.sinch.countermanager.model;
 
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import java.time.LocalDateTime;
 
@@ -9,15 +8,18 @@ import java.time.LocalDateTime;
 public class BorderInfoEntity {
 
     @Id
-    @GeneratedValue
-    private Long id;
+    private Integer id;
 
     private LocalDateTime timestamp;
 
     private Integer value;
 
-    public BorderInfoEntity(Integer value) {
+    public BorderInfoEntity() {
+    }
+
+    public BorderInfoEntity(Integer value, Integer id) {
         this.value = value;
+        this.id = id;
         timestamp = LocalDateTime.now();
     }
 
