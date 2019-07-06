@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProducerConsumerController {
 
     private final RequestInfoService requstInfoService;
-    private ConcurrencyService concurrencyService;
+    private final ConcurrencyService concurrencyService;
 
     public ProducerConsumerController(RequestInfoService requstInfoService, ConcurrencyService concurrencyService) {
         this.requstInfoService = requstInfoService;

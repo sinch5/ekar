@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class RequestInfoServiceImpl implements RequestInfoService {
 
-    private RequestInfoRepository requestInfoRepository;
+    private final RequestInfoRepository requestInfoRepository;
 
     @Autowired
     public RequestInfoServiceImpl(RequestInfoRepository requestInfoRepository) {

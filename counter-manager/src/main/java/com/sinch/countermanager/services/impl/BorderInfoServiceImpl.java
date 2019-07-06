@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 @Service("borderInfoService")
 public class BorderInfoServiceImpl implements BorderInfoService {
 
-    private BorderInfoRepository borderInfoRepository;
+    private final BorderInfoRepository borderInfoRepository;
 
     public BorderInfoServiceImpl(BorderInfoRepository borderInfoRepository) {
         this.borderInfoRepository = borderInfoRepository;

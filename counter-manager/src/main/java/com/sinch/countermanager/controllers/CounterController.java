@@ -20,7 +20,6 @@ public class CounterController {
         this.concurrencyService = concurrencyService;
     }
 
-
     @PutMapping("/counter/{value}")
     public void setInitialCount(@PathVariable Integer value) {
         counterManagerService.setValue(value);

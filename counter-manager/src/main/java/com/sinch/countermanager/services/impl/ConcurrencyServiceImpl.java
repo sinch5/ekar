@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -20,6 +19,9 @@ import java.util.stream.IntStream;
  */
 @Service("concurrencyService")
 public class ConcurrencyServiceImpl implements ConcurrencyService {
+    private interface Command {
+        void execute();
+    }
 
     public static final int HIGH_BORER = 100;
     public static final int LOW_BORER = 0;
@@ -30,16 +32,14 @@ public class ConcurrencyServiceImpl implements ConcurrencyService {
 
     private final ReentrantLock producersLock =  new ReentrantLock(true);
 
-    private final Condition producedMsg  = producersLock.newCondition();
+    private final Condition producedMsg = producersLock.newCondition();
     private final Condition consumedMsg = producersLock.newCondition();
-
-    private boolean borderReached;
 
     /**
      *
      * @param counterManagerService manager of Counter
      * @param cachedThreadPool pool
-     * @param borderInfoService border reaching fixator
+     * @param borderInfoService border reaching сщтекщддштп ыукмшсу
      */
     public ConcurrencyServiceImpl(CounterManagerService counterManagerService, ExecutorService cachedThreadPool, BorderInfoService borderInfoService) {
         this.counterManagerService = counterManagerService;
@@ -49,18 +49,14 @@ public class ConcurrencyServiceImpl implements ConcurrencyService {
 
     @Override
     public void start(int producers, int consumers) {
-        CyclicBarrier cyclicBarrier = new CyclicBarrier(producers + consumers); // To start all threads at the sametime to model competition
-
-        startProducers(cyclicBarrier, Optional.empty(), producers);
-        startConsumers(cyclicBarrier, Optional.empty(), consumers);
+        startProducers(producers, Optional.empty());
+        startConsumers(consumers, Optional.empty());
     }
 
     @Override
     public void start(int produces, int consumers, CountDownLatch countDownLatch) {
-        CyclicBarrier cyclicBarrier = new CyclicBarrier(produces + consumers);
-
-        startProducers(cyclicBarrier, Optional.of(countDownLatch), produces);
-        startConsumers(cyclicBarrier, Optional.of(countDownLatch), consumers);
+        startProducers(produces, Optional.of(countDownLatch));
+        startConsumers(consumers, Optional.of(countDownLatch));
     }
 
     /**
@@ -79,24 +75,23 @@ public class ConcurrencyServiceImpl implements ConcurrencyService {
         });
     }
 
-    private void startProducers(CyclicBarrier cyclicBarrier, Optional<CountDownLatch> countDownLatch, int producers) {
+    private void startProducers(int producers, Optional<CountDownLatch> countDownLatch) {
         IntStream.
             range(0, producers).
-            forEach(value -> runThreads(cyclicBarrier, countDownLatch, value, producedMsg, consumedMsg, HIGH_BORER, ()->counterManagerService.increase()));
+            forEach(value -> runThreads(countDownLatch, value, producedMsg, consumedMsg, HIGH_BORER, ()->counterManagerService.increase()));
     }
 
-    private void startConsumers(CyclicBarrier cyclicBarrier, Optional<CountDownLatch> countDownLatch, int consumers) {
+    private void startConsumers(int consumers,  Optional<CountDownLatch> countDownLatch) {
         IntStream.
             range(0, consumers).
-            forEach(value -> runThreads(cyclicBarrier,countDownLatch, value,  consumedMsg, producedMsg, LOW_BORER, ()->counterManagerService.decrease()));
+            forEach(value -> runThreads(countDownLatch, value,  consumedMsg, producedMsg, LOW_BORER, ()->counterManagerService.decrease()));
     }
 
-    private void runThreads(CyclicBarrier cyclicBarrier, Optional<CountDownLatch> countDownLatch, int value, Condition producedMsg, Condition consumedMsg, int highBorer, Runnable valueChanger) {
-        cachedThreadPool.execute(() -> process(cyclicBarrier, countDownLatch, value, producedMsg,  consumedMsg, highBorer, ()->valueChanger.run()));
+    private void runThreads(Optional<CountDownLatch> countDownLatch, int value, Condition producedMsg, Condition consumedMsg, int highBorer, Command command) {
+        cachedThreadPool.execute(() -> process(countDownLatch, value, producedMsg,  consumedMsg, highBorer, ()->command.execute()));
     }
 
-    private void process(CyclicBarrier cyclicBarrier, Optional<CountDownLatch> countDownLatch,  Integer threadId, Condition from, Condition to, int border, Runnable valueChanger) {
-        waitWhenAllThreadsReady(cyclicBarrier);
+    private void process(Optional<CountDownLatch> countDownLatch,  Integer threadId, Condition from, Condition to, int border, Runnable valueChanger) {
         try {
             producersLock.lock();
             while (counterManagerService.getValue() == border) {
@@ -104,9 +99,7 @@ public class ConcurrencyServiceImpl implements ConcurrencyService {
             }
             valueChanger.run();
             logChanging(from, threadId);
-            if (counterManagerService.getValue() == border) {
-                borderInfoService.persist(new BorderInfoEntity(border));
-            }
+            fixBorderReached(border);
             to.signal();//Inform producer or consumer that counter is changed
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -118,15 +111,13 @@ public class ConcurrencyServiceImpl implements ConcurrencyService {
         }
     }
 
-    private void logChanging(Condition from, int threadId) {
+    private void logChanging(final Condition from, int threadId) {
         System.out.println(String.format("%s-%s count=%s", from.equals(producedMsg)?"producer":"consumer", threadId, counterManagerService.getValue()));
     }
 
-    private void waitWhenAllThreadsReady(CyclicBarrier cyclicBarrier) {
-        /*try {
-            cyclicBarrier.await();
-        } catch (InterruptedException| BrokenBarrierException e) {
-            e.printStackTrace();
-        }*/
+    void fixBorderReached(int border) {
+        if (counterManagerService.getValue() == border) {
+            borderInfoService.persist(new BorderInfoEntity(border));
+        }
     }
 }

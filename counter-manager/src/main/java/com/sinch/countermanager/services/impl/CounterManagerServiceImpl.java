@@ -39,9 +39,7 @@ public class CounterManagerServiceImpl implements CounterManagerService {
 
     @Override
     public void setValue(Integer value) {
-        if (value > HIGH_BORER || value < LOW_BORER) {//to convey invariant
-           throw new RuntimeException("Inaccessible value");
-        }
+        checkBorders(value);
         counter = value;
         System.out.println("3 is set to " + value);
         counterValueRepository.save(new CounterEntity(value));
@@ -52,13 +50,10 @@ public class CounterManagerServiceImpl implements CounterManagerService {
         return counter;
     }
 
-    @Override
-    public void persist(CounterEntity counterEntity) {
-        counterValueRepository.save(counterEntity);
+    private void checkBorders(int value) {
+        if (value > HIGH_BORER || value < LOW_BORER) {//to convey invariant
+            throw new RuntimeException("Inaccessible value");
+        }
     }
 
-    @Override
-    public void load(Integer id) {
-        counterValueRepository.getOne(id);
-    }
 }
