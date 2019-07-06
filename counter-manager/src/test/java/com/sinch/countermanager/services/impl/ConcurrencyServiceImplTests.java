@@ -11,6 +11,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.stream.IntStream;
 
 /**
  * @author Sinchinov Yury
@@ -41,5 +42,12 @@ public class ConcurrencyServiceImplTests {
 		concurrencyService.start(200, 200, countDownLatch);
 		countDownLatch.await();
 		assert(counterManagerService.getValue().equals(50));
+
+		countDownLatch  = new CountDownLatch(150);
+		concurrencyService.start(100, 50, countDownLatch); // producers> customers on 50. Prodecers will reach 100 and all producer thread will be in wait status
+		//counterManagerService.setValue(40); //Set Counter value to 40. Producers should wake up and add rest 50 iterations
+		countDownLatch.await();
+		assert(counterManagerService.getValue().equals(100)); //Result must be 90
+
 	}
 }
