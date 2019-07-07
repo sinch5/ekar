@@ -91,7 +91,7 @@ public class ConcurrencyServiceImpl implements ConcurrencyService {
             if (countDownLatch.isPresent()) {
                 countDownLatch.get().countDown();
             }
-            counterManagerService.notify();
+            counterManagerService.notifyAll();
         }
     }
 
