@@ -9,8 +9,6 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.IntStream;
 
 /**
@@ -29,11 +27,6 @@ public class ConcurrencyServiceImpl implements ConcurrencyService {
     private final CounterManagerService counterManagerService;
     private final BorderInfoService borderInfoService;
     private final ExecutorService cachedThreadPool;
-
-    private final ReentrantLock producersLock =  new ReentrantLock(true);
-
-    private final Condition producedMsg = producersLock.newCondition();
-    private final Condition consumedMsg = producersLock.newCondition();
 
     /**
      *
@@ -64,55 +57,54 @@ public class ConcurrencyServiceImpl implements ConcurrencyService {
      */
     @Override
     public void awake() {
-        cachedThreadPool.execute(() -> {
-            try {
-                producersLock.lock();
-                producedMsg.signalAll();
-                consumedMsg.signalAll();
-            } finally {
-                producersLock.unlock();
-            }
-        });
+        synchronized (counterManagerService) {
+            counterManagerService.notifyAll();
+        }
     }
 
     private void startProducers(int producers, Optional<CountDownLatch> countDownLatch) {
         IntStream.
             range(0, producers).
-            forEach(value -> runThreads(countDownLatch, value, producedMsg, consumedMsg, HIGH_BORER, ()->counterManagerService.increase()));
+            forEach(value -> runThreads("producer", value,  HIGH_BORER, ()->counterManagerService.increase(), countDownLatch));
     }
 
     private void startConsumers(int consumers,  Optional<CountDownLatch> countDownLatch) {
         IntStream.
             range(0, consumers).
-            forEach(value -> runThreads(countDownLatch, value,  consumedMsg, producedMsg, LOW_BORER, ()->counterManagerService.decrease()));
+            forEach(value -> runThreads( "consumer",value, LOW_BORER, ()->counterManagerService.decrease(), countDownLatch));
     }
 
-    private void runThreads(Optional<CountDownLatch> countDownLatch, int value, Condition producedMsg, Condition consumedMsg, int highBorer, Command command) {
-        cachedThreadPool.execute(() -> process(countDownLatch, value, producedMsg,  consumedMsg, highBorer, ()->command.execute()));
+    private void runThreads(String threadType, int value, int border, Command command, Optional<CountDownLatch> countDownLatch) {
+        cachedThreadPool.execute(() -> process(threadType, value,  border, ()->command.execute(), countDownLatch));
     }
 
-    private void process(Optional<CountDownLatch> countDownLatch,  int threadId, Condition from, Condition to, int border, Runnable valueChanger) {
-        try {
-            producersLock.lock();
+    private void process(String threadType, int threadId, int border, Command valueChanger, Optional<CountDownLatch> countDownLatch) {
+        synchronized (counterManagerService) {
             while (isBorderReached(border)) {
-                from.await();
+                waitWhenDecreased();
             }
-            valueChanger.run();
-            logChanging(from, threadId);
+
+            valueChanger.execute();
+            logChanging(threadType, threadId);
             fixBorderReached(border, threadId);
-            to.signal();//Inform producer or consumer that counter is changed
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } finally {
+
             if (countDownLatch.isPresent()) {
                 countDownLatch.get().countDown();
             }
-            producersLock.unlock();
+            counterManagerService.notify();
         }
     }
 
-    private void logChanging(final Condition from, int threadId) {
-        System.out.println(String.format("%s-%s count=%s", from.equals(producedMsg)?"producer":"consumer", threadId, counterManagerService.getValue()));
+    private void waitWhenDecreased() {
+        try {
+            counterManagerService.wait();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void logChanging(String name, int threadId) {
+        System.out.println(String.format("%s-%s count=%s",name, threadId, counterManagerService.getValue()));
     }
 
     void fixBorderReached(int border, Integer threadId) {
