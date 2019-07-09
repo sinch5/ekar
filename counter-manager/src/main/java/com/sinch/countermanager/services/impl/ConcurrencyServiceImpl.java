@@ -7,9 +7,7 @@ import com.sinch.countermanager.services.CounterManagerService;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
-import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.IntStream;
 
@@ -44,16 +42,14 @@ public class ConcurrencyServiceImpl implements ConcurrencyService {
 
     @Override
     public void start(int producers, int consumers) {
-        CyclicBarrier cyclicBarrier = new CyclicBarrier(producers + consumers);
-        startProducers(producers, cyclicBarrier,Optional.empty());
-        startConsumers(consumers, cyclicBarrier,Optional.empty());
+        startProducers(producers, Optional.empty());
+        startConsumers(consumers, Optional.empty());
     }
 
     @Override
-    public void start(int produces, int consumers, CountDownLatch countDownLatch) {
-        CyclicBarrier cyclicBarrier = new CyclicBarrier(produces + consumers);
-        startProducers(produces, cyclicBarrier, Optional.of(countDownLatch));
-        startConsumers(consumers, cyclicBarrier, Optional.of(countDownLatch));
+    public void start(int producers, int consumers, CountDownLatch countDownLatch) {
+        startProducers(producers, Optional.of(countDownLatch));
+        startConsumers(consumers, Optional.of(countDownLatch));
     }
 
     /**
@@ -66,26 +62,24 @@ public class ConcurrencyServiceImpl implements ConcurrencyService {
         }
     }
 
-    private void startProducers(int producers,CyclicBarrier cyclicBarrier, Optional<CountDownLatch> countDownLatch) {
+    private void startProducers(int producers, Optional<CountDownLatch> countDownLatch) {
         IntStream.
             range(0, producers).
-            forEach(value -> runThreads("producer", value,  HIGH_BORER, ()->counterManagerService.increase(),cyclicBarrier ,countDownLatch));
+            forEach(value -> runThreads("producer", value,  HIGH_BORER, ()->counterManagerService.increase(), countDownLatch));
     }
 
-    private void startConsumers(int consumers,CyclicBarrier cyclicBarrier,  Optional<CountDownLatch> countDownLatch) {
+    private void startConsumers(int consumers,  Optional<CountDownLatch> countDownLatch) {
         IntStream.
             range(0, consumers).
-            forEach(value -> runThreads( "consumer",value, LOW_BORER, ()->counterManagerService.decrease(),cyclicBarrier, countDownLatch));
+            forEach(value -> runThreads( "consumer",value, LOW_BORER, ()->counterManagerService.decrease(), countDownLatch));
     }
 
-    private void runThreads(String threadType, int value, int border, Command command, CyclicBarrier cyclicBarrier, Optional<CountDownLatch> countDownLatch) {
-        cachedThreadPool.execute(() -> process(threadType, value,  border, ()->command.execute(), cyclicBarrier, countDownLatch));
+    private void runThreads(String threadType, int value, int border, Command command, Optional<CountDownLatch> countDownLatch) {
+        cachedThreadPool.execute(() -> process(threadType, value,  border, ()->command.execute(), countDownLatch));
     }
 
-    private void process(String threadType, int threadId, int border, Command valueChanger,CyclicBarrier cyclicBarrier ,Optional<CountDownLatch> countDownLatch) {
-        waitAllThreads(cyclicBarrier);
+    private void process(String threadType, int threadId, int border, Command valueChanger, Optional<CountDownLatch> countDownLatch) {
         synchronized (counterManagerService) {
-
             while (isBorderReached(border)) {
                 waitWhenDecreased();
             }
@@ -98,16 +92,6 @@ public class ConcurrencyServiceImpl implements ConcurrencyService {
                 countDownLatch.get().countDown();
             }
             counterManagerService.notifyAll();
-        }
-    }
-
-    private void waitAllThreads(CyclicBarrier cyclicBarrier) {
-        try {
-            cyclicBarrier.await();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (BrokenBarrierException e) {
-            e.printStackTrace();
         }
     }
 
